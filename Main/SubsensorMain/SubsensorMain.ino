@@ -7,17 +7,39 @@
 
 /*  PINOUT MONTAJE EN ARDUINO UNO
     RTC:
-
+      Vcc -> 5V
+      GND -> GND
+      SCL -> A5
+      SDA -> A4
+      
     Módulo LCD:
+      Vcc -> 5V
+      GND -> GND
+      SCL -> A5
+      SDA -> A4     
+
+    Módulo SD:
+      Vcc  -> 5V
+      GND  -> GND
+      MOSI -> D11
+      SCK  -> D13
+      MISO -> D12
 
     DHT22 (modulo con Rpull-up):
       Vcc -> 5V
       Do  -> D2
       GND -> GND
+      
     MQ-135 (Sensor CO2):
       Vcc -> 5V
       Ao  -> A0
       GND -> GND
+
+    LED Verde (Estatus LED)
+      D3
+
+    LED Rojo (Error LED)
+      D4
 */
 
 #include <SD.h>
@@ -39,8 +61,8 @@
 DHT dht(DHTPIN, DHTTYPE);
 
 RTC_DS1307 rtc;
-int segundo, minuto, hora, dia, mes;
-long anio; //variable año
+String segundo, minuto, hora, dia, mes;
+String anio; //variable año
 DateTime HoraFecha;
 
 File logFile;
@@ -74,14 +96,46 @@ void setup() {
 
   //Creamos el nombre del fichero donde guardar los datos
   HoraFecha = rtc.now(); //obtenemos la hora y fecha actual
-  segundo = HoraFecha.second();
-  minuto = HoraFecha.minute();
-  hora = HoraFecha.hour();
-  dia = HoraFecha.day();
-  mes = HoraFecha.month();
-  anio = HoraFecha.year();
+  if (HoraFecha.second() < 10) {
+    segundo = "0" + String(HoraFecha.second());
+  }
+  else {
+    segundo = String(HoraFecha.second());
+  }
 
-  nombreFichero = String(mes) + String(dia) + String(hora) + String(minuto) + ".csv";
+  if (HoraFecha.minute() < 10) {
+    minuto = "0" + String(HoraFecha.minute());
+  }
+  else {
+    minuto = String(HoraFecha.minute());
+  }
+
+  if (HoraFecha.hour() < 10) {
+    hora = "0" + String(HoraFecha.hour());
+  }
+  else {
+    hora = String(HoraFecha.hour());
+  }
+
+  if (HoraFecha.day() < 10) {
+    dia = "0" + String(HoraFecha.day());
+  }
+  else {
+    dia = String(HoraFecha.day());
+  }
+  if (HoraFecha.month() < 10) {
+    mes = "0" + String(HoraFecha.month());
+  }
+  else {
+    mes = String(HoraFecha.month());
+  }
+
+  anio = String(HoraFecha.year());
+
+
+  //nombreFichero = String(mes) + String(dia) + String(hora) + String(minuto) + ".csv";
+  //Se crea un nombre regular de la forma MMDDHHmm.csv
+  nombreFichero = mes + dia + hora + minuto + ".csv";
 
   //Se abre el fichero para crear la cabecera del .CSV
   logFile = SD.open( nombreFichero, FILE_WRITE);
@@ -111,13 +165,13 @@ int readSensor() {
 void loop() {
   //Obtenemos el instante de tiempo
   HoraFecha = rtc.now(); //obtenemos la hora y fecha actual
-  segundo = HoraFecha.second();
-  minuto = HoraFecha.minute();
-  hora = HoraFecha.hour();
-  dia = HoraFecha.day();
-  mes = HoraFecha.month();
-  anio = HoraFecha.year();
-  
+  segundo = String(HoraFecha.second());
+  minuto = String(HoraFecha.minute());
+  hora = String(HoraFecha.hour());
+  dia = String(HoraFecha.day());
+  mes = String(HoraFecha.month());
+  anio = String(HoraFecha.year());
+
   //Inicializamos el sensor MQ-135
   MQ135 gasSensor = MQ135(PIN_MQ); // Vinculamos el sensor al pin A0
 
@@ -168,6 +222,6 @@ void loop() {
   //Al finalizar se apagan los dos LEDs
   digitalWrite(PINLEDRECORDING, LOW);
   digitalWrite(PINLEDERROR, LOW);
-  
+
   delay(PERIODO_MUESTREO); //Se espera el tiempo de meustreo para la siguiente medida
 }
