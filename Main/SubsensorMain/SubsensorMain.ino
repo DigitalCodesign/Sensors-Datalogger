@@ -56,7 +56,7 @@
 
 #define PERIODO_MUESTREO 2000 //Se mide cada 2 segundos
 
-#define DHTTYPE DHT22   // DHT 22
+#define DHTTYPE DHT11   // DHT 22
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -87,8 +87,7 @@ void setup() {
   rtc.begin(); //Inicializamos el RTC
 
   Serial.print(F("Iniciando SD ..."));
-  if (!SD.begin(9))
-  {
+  while (!SD.begin(9)){
     Serial.println(F("Error al iniciar"));
     return;
   }
@@ -142,7 +141,7 @@ void setup() {
   if (logFile) { //Si se puede abrir el fichero
     Serial.print("Creado correctamente :");
     Serial.println(nombreFichero);
-    logFile.println("TimeStamp, Humedad, Temperatura"); //Se escribe la cabecera del .CSV
+    logFile.println("TimeStamp,Humedad (%), Temperatura(DHT), Temperatura (BMP), Presion (hPa), Altitud (m), CO2 (ppm)"); //Se escribe la cabecera del .CSV
     logFile.close(); //Cierro el fichero al acabar de escribir todos los elementos
   }
 
@@ -210,6 +209,17 @@ void loop() {
       logFile.print(altitud_bmp);
       logFile.print(",");
       logFile.println(CO2ppm);
+      Serial.println("Datos almacenados correctamente");
+      Serial.print("H:");
+      Serial.print(h);
+      Serial.print(" T:");
+      Serial.print(t);
+      Serial.print(" P:");
+      Serial.print(presion_bmp);
+      Serial.print(" A:");
+      Serial.print(altitud_bmp);
+      Serial.print(" [CO2]:");
+      Serial.println(CO2ppm);
     }
     logFile.close(); //Cierro el fichero al acabar de escribir todos los elementos
   }

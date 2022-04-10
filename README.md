@@ -44,3 +44,4 @@ Debe instalarse lo siguiente:
 ## Tools
 
 - Se dispone de un escaner I2C para determinar las direcciones del BMP y del PCF8574 del Display LCD.
+- Se dispone de un script en Python3 que recibe por consola el nombre del fichero a procesar (debe estar en misma ubicacion que el script). Lo procesa, genera las gráficas de los datos y las almacena en 'Medidas/Fecha', moviendo a dicha ruta el csv procesado.
