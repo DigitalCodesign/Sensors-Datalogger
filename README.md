@@ -1,6 +1,6 @@
 # Estación Meteoroligca Cefiro
 
-Proyecto desarrollado para el IES Güimar para implementar una estación meteorológica con volcado de datos a la red a través del servicio web de Thingspeak y su API de acceso gratuito.
+Descripción
 
 ## Autores: 
 - José Luis González de Chávez 
@@ -9,39 +9,33 @@ Proyecto desarrollado para el IES Güimar para implementar una estación meteoro
 ## Materiales
 - BMP280 I2C
 - DHT22
-- Wemos D1 R1
+- Arduino UNO
 - Shield Protoboard Arduino UNO
 - Portapilas 6F22
 - Pila 6F22 9V
-- Display 16x02 I2C
+- Reloj RTc
+- Módulo Tarjeta SD HW-125
 
 ## Conexiones
 
 - BMP280: 
 	- Vcc -> 3.3V
 	- GND -> GND
-	- SDA -> SDA (D4)
-	- SCL -> SCL (D3)
- - LCD 16x02 I2C:
- 	- Vcc -> 5V
- 	- GND -> GND
- 	- SDA -> SDA (D4)
- 	- SCL -> SCL (D3)
+	- SDA -> SDA
+	- SCL -> SCL 
  - DHT22 (modulo con Rpull-up):
- 	- Vcc -> 3.3V
- 	- Do  -> D5 (GPIO14)
+ 	- Vcc -> 5V
+ 	- Do  -> D2
  	- GND -> GND
 
 ## Librerias
 
 Debe instalarse lo siguiente:
 
-- Placas Wemos D1 desde el Gestor de Placas de Arduino, añadiendo previamente el enlace de consulta: http://arduino.esp8266.com/stable/package_esp8266com_index.json
 - Librería DHT.h desarrollada por Adafruit (disponible de forma oficial en Gestor de Librerías)
 - Librería BMP280_DEV (disponible en https://github.com/MartinL1/BMP280_DEV)
-- Librería LiquidCrystal I2C disponible en el Gestor de Librerias
 
 ## Tools
 
-- Se dispone de un escaner I2C para determinar las direcciones del BMP y del PCF8574 del Display LCD.
+- Se dispone de un escaner I2C para determinar las direcciones del BMP.
 - Se dispone de un script en Python3 que recibe por consola el nombre del fichero a procesar (debe estar en misma ubicacion que el script). Lo procesa, genera las gráficas de los datos y las almacena en 'Medidas/Fecha', moviendo a dicha ruta el csv procesado.
