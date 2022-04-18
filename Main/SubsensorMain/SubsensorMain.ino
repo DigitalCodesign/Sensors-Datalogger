@@ -56,7 +56,7 @@
 
 #define PERIODO_MUESTREO 2000 //Se mide cada 2 segundos
 
-#define DHTTYPE DHT11   // DHT 22
+#define DHTTYPE DHT22   // DHT 22
 
 DHT dht(DHTPIN, DHTTYPE);
 
