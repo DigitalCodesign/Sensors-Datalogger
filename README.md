@@ -1,10 +1,12 @@
-# Estación Meteoroligca Cefiro
+# Estación Meteorológica
 
 Descripción
 
 ## Autores: 
-- José Luis González de Chávez 
+
 - Augusto Samuel Hernández Martín
+- José Luis González de Chávez 
+- Miqueas Z. Fortes
 
 ## Materiales
 - BMP280 I2C
