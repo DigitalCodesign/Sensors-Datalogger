@@ -22,7 +22,6 @@ v1.0 - First release
 #endif
 
 /// The load resistance on the board
-//#define RLOAD 0.515 //10KOhm
 #define RLOAD 10.0
 /// Calibration resistance at atmospheric CO2 level
 #define RZERO 76.63

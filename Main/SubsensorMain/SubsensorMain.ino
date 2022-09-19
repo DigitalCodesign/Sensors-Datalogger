@@ -1,8 +1,6 @@
 /*
-   Código para Datalogger de un MQ-135 (CO2) y un DHT-22 (Tª y Humedad).
+   Código para Datalogger de un MQ-135 (CO2), un MQ-7 y un DHT-22 (Tª y Humedad).
    Vuelca los datos en un fichero .CSV con nombre del instante que comienza a grabar.
-   Autor: Augusto Samuel Hernández Martín
-   GitHub: AugustoS97 (https://github.com/AugustoS97)
 */
 
 /*  PINOUT MONTAJE EN ARDUINO UNO
@@ -11,12 +9,12 @@
       GND -> GND
       SCL -> A5
       SDA -> A4
-      
+
     Módulo LCD:
       Vcc -> 5V
       GND -> GND
       SCL -> A5
-      SDA -> A4     
+      SDA -> A4
 
     Módulo SD:
       Vcc  -> 5V
@@ -29,7 +27,7 @@
       Vcc -> 5V
       Do  -> D2
       GND -> GND
-      
+
     MQ-135 (Sensor CO2):
       Vcc -> 5V
       Ao  -> A0
@@ -48,13 +46,18 @@
 #include <DHT.h>
 #include <BMP280_DEV.h> //BMP280 libreria
 #include "MQ135.h"
+#include <MQ7.h>
+#include <LiquidCrystal_I2C.h>
+#include "LowPower.h"
 
 #define PINLEDRECORDING 3
 #define PINLEDERROR 4
 #define DHTPIN 2     // Pin digital al que se conecta el sensor DHT22
 #define PIN_MQ A0 //Pin analogico para MQ-135
+#define PIN_MQ7 A1
+#define VOLTAGE 5
 
-#define PERIODO_MUESTREO 2000 //Se mide cada 2 segundos
+#define PERIODO_MUESTREO 10000 //Se mide cada 2 segundos
 
 #define DHTTYPE DHT22   // DHT 22
 
@@ -68,10 +71,18 @@ DateTime HoraFecha;
 File logFile;
 String nombreFichero;
 
-float temperatura_bmp, presion_bmp, altitud_bmp;
-BMP280_DEV bmp280; //Se define el sensor
+
+MQ7 mq7(PIN_MQ7, VOLTAGE);
+
+
+
+LiquidCrystal_I2C lcd(0x27, 16, 2); // Se ajusta la direccion a 0x27 y el tamaño 16x2
 
 void setup() {
+  lcd.init();                      // Inicializa LCD
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Iniciando...");
   //Se configuran los pines de los LEDs como salidas
   pinMode(PINLEDRECORDING, OUTPUT);
   pinMode(PINLEDERROR, OUTPUT);
@@ -84,10 +95,15 @@ void setup() {
 
   Serial.begin(9600);
 
+  //Calibrando el sensor
+  Serial.println("Calibrating MQ7");
+  mq7.calibrate();    // calculates R0
+  Serial.println("Calibration done!");
+
   rtc.begin(); //Inicializamos el RTC
 
   Serial.print(F("Iniciando SD ..."));
-  while (!SD.begin(9)){
+  while (!SD.begin(9)) {
     Serial.println(F("Error al iniciar"));
     return;
   }
@@ -141,25 +157,19 @@ void setup() {
   if (logFile) { //Si se puede abrir el fichero
     Serial.print("Creado correctamente :");
     Serial.println(nombreFichero);
-    logFile.println("TimeStamp,Humedad (%), Temperatura(DHT), Temperatura (BMP), Presion (hPa), Altitud (m), CO2 (ppm)"); //Se escribe la cabecera del .CSV
+    logFile.println("TimeStamp, Humedad (%), Temperatura(DHT), CO (ppm), CO2 (ppm)"); //Se escribe la cabecera del .CSV
     logFile.close(); //Cierro el fichero al acabar de escribir todos los elementos
   }
 
-  //Inicializamos el sensor BMP280 y lo configuramos
-  bmp280.begin(BMP280_I2C_ALT_ADDR); //Se inicializa con la direccion 0x76
-  bmp280.setTimeStandby(TIME_STANDBY_250MS); //Se configura el tiempo entre medidas
-  bmp280.startNormalConversion(); //Se hace trabajar en modo continuo, medida tras medida...
 
   //Al acabar el arranque se apagan los dos LEDs
   digitalWrite(PINLEDRECORDING, LOW);
   digitalWrite(PINLEDERROR, LOW);
+
+  lcd.clear();
 }
 
 
-// Funcion que simula la lectura de un sensor
-int readSensor() {
-  return 0;
-}
 
 void loop() {
   //Obtenemos el instante de tiempo
@@ -172,22 +182,24 @@ void loop() {
   anio = String(HoraFecha.year());
 
   //Inicializamos el sensor MQ-135
-  MQ135 gasSensor = MQ135(PIN_MQ); // Vinculamos el sensor al pin A0
+  MQ135 mq135_sensor(PIN_MQ); // Vinculamos el sensor al pin A0
 
   //Se leen los sensores
-  int value = readSensor();
+  //int value = readSensor();
 
   float h = dht.readHumidity();
   float t = dht.readTemperature();
 
   //Se lee la concentracion de CO2 (en ppm)
-  float CO2ppm = gasSensor.getPPM(); //Se obtiene la medida de Co2
+  float CO2ppm = mq135_sensor.getPPM(); //Se obtiene la medida de Co2
 
-  //Se lee el BMP y se guardan los valores
-  bmp280.getCurrentMeasurements(temperatura_bmp, presion_bmp, altitud_bmp);
+  //Se lee el MQ7
+  float COppm = mq7.readPpm();
+  
   // Abrir archivo .csv con la fecha de arranque y escribir valor
   logFile = SD.open(nombreFichero, FILE_WRITE);
   if (logFile) { //Si se puede abrir el fichero
+    lcd.backlight();
     //Se enciende el LED para indicar que se ha abierto correctamente
     digitalWrite(PINLEDRECORDING, HIGH);
     digitalWrite(PINLEDERROR, LOW);
@@ -202,11 +214,7 @@ void loop() {
       logFile.print(",");
       logFile.print(t);
       logFile.print(",");
-      logFile.print(temperatura_bmp);
-      logFile.print(",");
-      logFile.print(presion_bmp);
-      logFile.print(",");
-      logFile.print(altitud_bmp);
+      logFile.print(COppm);
       logFile.print(",");
       logFile.println(CO2ppm);
       Serial.println("Datos almacenados correctamente");
@@ -214,10 +222,8 @@ void loop() {
       Serial.print(h);
       Serial.print(" T:");
       Serial.print(t);
-      Serial.print(" P:");
-      Serial.print(presion_bmp);
-      Serial.print(" A:");
-      Serial.print(altitud_bmp);
+      Serial.print(" [CO]:");
+      Serial.print(COppm);
       Serial.print(" [CO2]:");
       Serial.println(CO2ppm);
     }
@@ -227,11 +233,32 @@ void loop() {
     digitalWrite(PINLEDRECORDING, LOW);
     digitalWrite(PINLEDERROR, HIGH);
     Serial.println("Error al abrir el archivo");
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Error lectura");
+    delay(1000);
+    lcd.noBacklight();
   }
+
+  lcd.clear();
+  lcd.setCursor (0, 0);
+  lcd.print("T:");
+  lcd.print(t, 1);
+  lcd.print(" H:");
+  lcd.print(h, 1);
+  lcd.setCursor(0, 1);
+  lcd.print("CO:");
+  lcd.print(COppm, 1);
+  lcd.print(" CO2:");
+  lcd.print(CO2ppm, 1);
 
   //Al finalizar se apagan los dos LEDs
   digitalWrite(PINLEDRECORDING, LOW);
   digitalWrite(PINLEDERROR, LOW);
 
-  delay(PERIODO_MUESTREO); //Se espera el tiempo de meustreo para la siguiente medida
+  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+
+  //delay(PERIODO_MUESTREO); //Se espera el tiempo de meustreo para la siguiente medida
+
+  
 }

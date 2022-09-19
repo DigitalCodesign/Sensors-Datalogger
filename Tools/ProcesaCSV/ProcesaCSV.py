@@ -49,7 +49,7 @@ with open(filename) as File:
         TemperaturaDHT = np.append(TemperaturaDHT, float(row[2]))
         TemperaturaBMP = np.append(TemperaturaBMP, float(row[3]))
         Presion = np.append(Presion, float(row[4]))
-        COdos = np.append(COdos, float(row[5]))
+        COdos = np.append(COdos, float(row[6]))
         ##print(row)
 
 #Se crea el directorio de destino
@@ -77,6 +77,7 @@ plt.xlabel('Hora de la medición')
 plt.ylabel('Temperatura ºC')
 plt.savefig(os.path.join(path, filename[0:-4] + '_Temperature.png'), dpi = 'figure', bbox_inches='tight')
 #plt.show()
+print(COdos)
 
 # Representacion de la [Co2] en ppm
 plt.figure(figsize=(32,18))
